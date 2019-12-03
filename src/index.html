@@ -5,6 +5,14 @@
     <title>Редактор текста</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
+        html {
+            height: 100%;
+        }
+        body {
+            height: calc(100% - 16px);
+            display: flex;
+            flex-direction: column;
+        }
         .editor {
             width: 100%;
             height: 100%;
@@ -96,11 +104,12 @@
 </div>
 <script async>
     const socket = io();
-    const $editor = document.querySelector('.editor');
-    $editor.addEventListener('input', (event) => {
-        debugger;
-        socket.emit('document change', $editor.innerHTML);
-    })
+    socket.emit('room', 'test');
+    socket.on('connected to room', (data) => {
+        const $editor = document.querySelector('.editor');
+        $editor.addEventListener('input', (event) => socket.emit('document change', $editor.innerHTML));
+        socket.on('document updated', doc => $editor.innerHTML = doc)
+    });
 </script>
 </body>
 </html>
