@@ -1,41 +1,20 @@
-html {
-    height: 100%;
-}
-
-body {
-    height: calc(100% - 16px);
-    display: flex;
-    flex-direction: column;
-}
-.wrapper {
-    height: 100%;
-}
-.editor {
-    width: 100%;
-    height: 100%;
-}
-
-.toolbar {
+.list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20px, 40px));
-    background-color: rgb(231, 231, 231);
-    color: rgb(0, 0, 0);
-    grid-gap: 1rem;
-    padding: 1rem;
-    justify-content: center;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-gap: 38px;
+    margin: 15px;
+}
+.thumbnail {
+    border: solid gray 3px;
+    height: 220px;
+    display: flex;
     align-items: center;
+    justify-content: center;
 }
 
-.tool-items {
-    background-color: rgb(27, 26, 26);
-    padding-top: .6rem;
-    padding-bottom: .6rem;
-    cursor: pointer;
-    color: #ffff;
+.thumbnail .text-content {
+    padding: 12px;
 }
-
-.tool-items:hover {
-    box-shadow: none;
-    background-color: #6b5e5e;
-
+.thumbnail .image {
+    width: 100%;
 }

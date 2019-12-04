@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактор текста</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="index.css" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let $editor;
+        const toolbarTemplate = `<div class="toolbar">
+
+    <button class="tool-items fa fa-underline"  onclick="document.execCommand('underline', false, '');">
+    </button>
+
+    <button class="tool-items fa fa-italic" onclick="document.execCommand('italic', false, '');">
+    </button>
+
+
+    <button class="tool-items fa fa-bold" onclick="document.execCommand('bold', false, '');">
+    </button>
+
+
+    <button class="tool-items fa fa-link" onclick="link()">
+    </button>
+
+    <button class="tool-items fa fa-scissors" onclick="document.execCommand('cut',false,'')"></button>
+
+
+    <input class="tool-items fa fa-file-image-o" type="file" accept="image/*" id="file" style="display: none;" onchange="getImage()">
+
+    <label for="file" class="tool-items fa fa-file-image-o"></label>
+
+
+
+
+
+    <button class="tool-items fa fa-undo" onclick="document.execCommand('undo',false,'')"></button>
+
+    <button class="tool-items fa fa-repeat" onclick="document.execCommand('redo',false,'')"></button>
+
+    <button class="tool-items fa fa-tint" onclick="changeColor()"></button>
+
+    <button class="tool-items fa fa-strikethrough" onclick="document.execCommand('strikeThrough',false,'')"></button>
+
+    <button class="tool-items fa fa-trash" onclick="document.execCommand('delete',false,'')"></button>
+
+
+    <button class="tool-items fa fa-scribd" onclick="document.execCommand('selectAll',false,'')"></button>
+
+
+    <button class="tool-items fa fa-clone" onclick="copy()"></button>
+    <button class="tool-items fa fa-save" onclick="save()"></button>
+    <button class="tool-items fa fa-align-center" onclick="document.execCommand('justifyCenter',false,'')"></button>
+    <button class="tool-items fa fa-align-left" onclick="document.execCommand('justifyLeft',false,'')"></button>
+    <button class="tool-items fa fa-align-right" onclick="document.execCommand('justifyRight',false,'')"></button>
+    </div>`;
+        const editorTemplate = `<div class="editor" contenteditable></div>`;
+        $editorWrapper = document.createElement('div');
+        $editorWrapper.classList.add('wrapper');
+        $editorWrapper.innerHTML = `${toolbarTemplate}${editorTemplate}`;
+
+        const userName = prompt('Введите имя пользователя', 'Anonymous');
+        const documentName = 'test';
+        const connectToSocketOptions = {query: {userName, documentName}};
+        const socket = io(connectToSocketOptions);
+
+        function onEditorChanged() {
+            socket.emit('document changed', $editor.innerHTML);
+        }
+
+        function handleConnectedToRoom(roomName) {
+            console.log(`Connected to room ${roomName}`);
+            initializeEditor();
+        }
+
+        function handleConnectedEvent() {
+        }
+
+        function save() {
+            socket.emit('save document', $editor.innerHTML);
+        }
+
+        function onDocumentUpdatedEvent(doc) {
+            $editor.innerHTML = doc
+        }
+
+        function handleNewUserConnectedToRoom(info) {
+            console.log(info);
+        }
+
+        function initializeEditor() {
+            document.body.append($editorWrapper);
+            $editor = document.querySelector('.editor');
+            $editor.addEventListener('input', onEditorChanged);
+            socket.on('document updated', onDocumentUpdatedEvent);
+        }
+
+        function onOpenError(error) {
+            console.error(error);
+        }
+
+        function tableAdd() {
+
+            rowstext = prompt("enter rows");
+            colstext = prompt("enter cols");
+            rows = parseInt(rowstext);
+            cols = parseInt(colstext);
+            if ((rows > 0) && (cols > 0)) {
+                table = $editor.contentWindow.document.createElement("table");
+                table.setAttribute("border", "1");
+                table.setAttribute("cellpadding", "2");
+                table.setAttribute("cellspacing", "2");
+                tbody = e.contentWindow.document.createElement("tbody");
+                for (var i = 0; i < rows; i++) {
+                    tr = e.contentWindow.document.createElement("tr");
+                    for (var j = 0; j < cols; j++) {
+                        td = e.contentWindow.document.createElement("td");
+                        br = e.contentWindow.document.createElement("br");
+                        td.appendChild(br);
+                        tr.appendChild(td);
+                    }
+                    tbody.appendChild(tr);
+                }
+                table.appendChild(tbody);
+                insertNodeAtSelection(e.contentWindow, table);
+            }
+        }
+
+        function onSaveError(error) {
+            console.error(error);
+        }
+    </script>
+</head>
+<body>
+<script>
+
+    socket.on('connected', handleConnectedEvent);
+    socket.on('connected to room', handleConnectedToRoom);
+    socket.on('new user connected to room', handleNewUserConnectedToRoom);
+    socket.on('open document error', onOpenError);
+    socket.on('save document error', onSaveError);
+
+
+</script>
+</body>
+</html>
