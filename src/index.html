@@ -117,7 +117,6 @@
         function handleConnectedEvent() {
         }
 
-
         function save() {
             socket.emit('save', $editor.innerHTML);
         }
@@ -139,6 +138,32 @@
 
         function onError(error) {
             console.error(error);
+        }
+
+        function tableAdd() {
+
+            rowstext = prompt("enter rows");
+            colstext = prompt("enter cols");
+            rows = parseInt(rowstext);
+            cols = parseInt(colstext);
+            if ((rows > 0) && (cols > 0)) {
+                table = $editor.contentWindow.document.createElement("table");
+                table.setAttribute("border", "1");
+                table.setAttribute("cellpadding", "2");
+                table.setAttribute("cellspacing", "2");
+                tbody = e.contentWindow.document.createElement("tbody");
+                for (var i=0; i < rows; i++) {
+                    tr =e.contentWindow.document.createElement("tr");
+                    for (var j=0; j < cols; j++) {
+                        td =e.contentWindow.document.createElement("td");
+                        br =e.contentWindow.document.createElement("br");
+                        td.appendChild(br);
+                        tr.appendChild(td);
+                    }
+                    tbody.appendChild(tr);
+                }
+                table.appendChild(tbody);
+                insertNodeAtSelection(e.contentWindow, table);
         }
 
     </script>
