@@ -1,13 +1,15 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const {readFile, writeFile} = require('fs');
 const { resolve } = require('path');
 const documents = {};
+
 function initializeConnectionToRoom(client, documentName, userName) {
     client.join(documentName);
     client.emit('connected');
-    client.emit('connected to room');
+    client.emit('connected to room', documentName);
     client.emit('document updated', documents[documentName]);
 
     client.broadcast
@@ -31,13 +33,12 @@ function initializeConnectionToRoom(client, documentName, userName) {
     })
 
 }
-app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
+
+app.use(express.static(__dirname + '/assets/'));
 
 io.on('connection', client => {
-
     const userName = client.handshake.query.userName;
     const documentName = client.handshake.query.documentName;
-
     if(!documents[documentName]) {
         readFile(resolve(__dirname, `../data/${documentName}.html`), (error, file) => {
             if (error) {

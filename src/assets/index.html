@@ -4,51 +4,10 @@
     <meta charset="UTF-8">
     <title>Редактор текста</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <style>
-        html {
-            height: 100%;
-        }
-
-        body {
-            height: calc(100% - 16px);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .editor {
-            width: 100%;
-            height: 100%;
-        }
-
-        .toolbar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(20px, 40px));
-            background-color: rgb(231, 231, 231);
-            color: rgb(0, 0, 0);
-            grid-gap: 1rem;
-            padding: 1rem;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .tool-items {
-            background-color: rgb(27, 26, 26);
-            padding-top: .6rem;
-            padding-bottom: .6rem;
-            cursor: pointer;
-            color: #ffff;
-        }
-
-        .tool-items:hover {
-            box-shadow: none;
-            background-color: #6b5e5e;
-
-        }
-    </style>
+    <link href="/index.css" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <script>
         let $editor;
-
         const toolbarTemplate = `<div class="toolbar">
 
     <button class="tool-items fa fa-underline"  onclick="document.execCommand('underline', false, '');">
@@ -98,6 +57,7 @@
     </div>`;
         const editorTemplate = `<div class="editor" contenteditable></div>`;
         $editorWrapper = document.createElement('div');
+        $editorWrapper.classList.add('wrapper');
         $editorWrapper.innerHTML = `${toolbarTemplate}${editorTemplate}`;
 
         const userName = prompt('Введите имя пользователя', 'Anonymous');
@@ -166,6 +126,7 @@
                 insertNodeAtSelection(e.contentWindow, table);
             }
         }
+
         function onSaveError(error) {
             console.error(error);
         }
