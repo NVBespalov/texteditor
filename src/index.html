@@ -3,50 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <title>Редактор текста</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
         html {
             height: 100%;
         }
+
         body {
             height: calc(100% - 16px);
             display: flex;
             flex-direction: column;
         }
+
         .editor {
             width: 100%;
             height: 100%;
         }
-        .toolbar{
-            display:grid;
-            grid-template-columns: repeat(auto-fit,minmax(20px,40px));
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(20px, 40px));
             background-color: rgb(231, 231, 231);
             color: rgb(0, 0, 0);
             grid-gap: 1rem;
             padding: 1rem;
             justify-content: center;
-            align-items:center;
+            align-items: center;
         }
 
-        .tool-items{
+        .tool-items {
             background-color: rgb(27, 26, 26);
             padding-top: .6rem;
-            padding-bottom:.6rem;
+            padding-bottom: .6rem;
             cursor: pointer;
             color: #ffff;
         }
-        .tool-items:hover{
+
+        .tool-items:hover {
             box-shadow: none;
             background-color: #6b5e5e;
 
         }
     </style>
-</head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let $editor;
 
-<script src="/socket.io/socket.io.js"></script>
-
-<body>
-<div class="toolbar">
+        const toolbarTemplate = `<div class="toolbar">
 
     <button class="tool-items fa fa-underline"  onclick="document.execCommand('underline', false, '');">
     </button>
@@ -88,28 +91,66 @@
 
 
     <button class="tool-items fa fa-clone" onclick="copy()"></button>
-
-
-
-
-    <!-- Jutify -->
-
+    <button class="tool-items fa fa-save" onclick="save()"></button>
     <button class="tool-items fa fa-align-center" onclick="document.execCommand('justifyCenter',false,'')"></button>
     <button class="tool-items fa fa-align-left" onclick="document.execCommand('justifyLeft',false,'')"></button>
     <button class="tool-items fa fa-align-right" onclick="document.execCommand('justifyRight',false,'')"></button>
-</div>
-<div class="editor" contenteditable>
-    <h1>Simple Html editor</h1>
-    <p>Good to start</p>
-</div>
-<script async>
-    const socket = io();
-    socket.emit('room', 'test');
-    socket.on('connected to room', (data) => {
-        const $editor = document.querySelector('.editor');
-        $editor.addEventListener('input', (event) => socket.emit('document change', $editor.innerHTML));
-        socket.on('document updated', doc => $editor.innerHTML = doc)
-    });
+    </div>`;
+        const editorTemplate= `<div class="editor" contenteditable></div>`;
+        $editorWrapper = document.createElement('div');
+        $editorWrapper.innerHTML = `${toolbarTemplate}${editorTemplate}`;
+
+        const userName = prompt('Введите имя пользователя', 'Anonymous');
+        const documentName = 'test';
+        const connectToSocketOptions = {query: {userName, documentName}};
+        const socket = io(connectToSocketOptions);
+
+        function onEditorChanged() {
+            socket.emit('document changed', $editor.innerHTML);
+        }
+
+        function handleConnectedToRoom(roomName) {
+            console.log(`Connected to room ${roomName}`);
+            initializeEditor();
+        }
+
+        function handleConnectedEvent() {
+        }
+
+
+        function save() {
+            socket.emit('save', $editor.innerHTML);
+        }
+
+        function onDocumentUpdatedEvent(doc) {
+            $editor.innerHTML = doc
+        }
+
+        function handleNewUserConnectedToRoom(info) {
+            console.log(info);
+        }
+
+        function initializeEditor() {
+            document.body.append($editorWrapper);
+            $editor = document.querySelector('.editor');
+            $editor.addEventListener('input', onEditorChanged);
+            socket.on('document updated', onDocumentUpdatedEvent);
+        }
+
+        function onError(error) {
+            console.error(error);
+        }
+
+    </script>
+</head>
+<body>
+<script>
+
+    socket.on('connected', handleConnectedEvent);
+    socket.on('connected to room', handleConnectedToRoom);
+    socket.on('new user connected to room', handleNewUserConnectedToRoom);
+    socket.on('not found', onError)
+
 </script>
 </body>
 </html>
