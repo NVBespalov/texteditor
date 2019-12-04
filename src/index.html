@@ -96,7 +96,7 @@
     <button class="tool-items fa fa-align-left" onclick="document.execCommand('justifyLeft',false,'')"></button>
     <button class="tool-items fa fa-align-right" onclick="document.execCommand('justifyRight',false,'')"></button>
     </div>`;
-        const editorTemplate= `<div class="editor" contenteditable></div>`;
+        const editorTemplate = `<div class="editor" contenteditable></div>`;
         $editorWrapper = document.createElement('div');
         $editorWrapper.innerHTML = `${toolbarTemplate}${editorTemplate}`;
 
@@ -118,7 +118,7 @@
         }
 
         function save() {
-            socket.emit('save', $editor.innerHTML);
+            socket.emit('save document', $editor.innerHTML);
         }
 
         function onDocumentUpdatedEvent(doc) {
@@ -136,7 +136,7 @@
             socket.on('document updated', onDocumentUpdatedEvent);
         }
 
-        function onError(error) {
+        function onOpenError(error) {
             console.error(error);
         }
 
@@ -152,11 +152,11 @@
                 table.setAttribute("cellpadding", "2");
                 table.setAttribute("cellspacing", "2");
                 tbody = e.contentWindow.document.createElement("tbody");
-                for (var i=0; i < rows; i++) {
-                    tr =e.contentWindow.document.createElement("tr");
-                    for (var j=0; j < cols; j++) {
-                        td =e.contentWindow.document.createElement("td");
-                        br =e.contentWindow.document.createElement("br");
+                for (var i = 0; i < rows; i++) {
+                    tr = e.contentWindow.document.createElement("tr");
+                    for (var j = 0; j < cols; j++) {
+                        td = e.contentWindow.document.createElement("td");
+                        br = e.contentWindow.document.createElement("br");
                         td.appendChild(br);
                         tr.appendChild(td);
                     }
@@ -164,8 +164,11 @@
                 }
                 table.appendChild(tbody);
                 insertNodeAtSelection(e.contentWindow, table);
+            }
         }
-
+        function onSaveError(error) {
+            console.error(error);
+        }
     </script>
 </head>
 <body>
@@ -174,7 +177,9 @@
     socket.on('connected', handleConnectedEvent);
     socket.on('connected to room', handleConnectedToRoom);
     socket.on('new user connected to room', handleNewUserConnectedToRoom);
-    socket.on('not found', onError)
+    socket.on('open document error', onOpenError);
+    socket.on('save document error', onSaveError);
+
 
 </script>
 </body>

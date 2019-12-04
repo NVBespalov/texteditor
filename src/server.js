@@ -1,43 +1,55 @@
 const app = require('express')();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const {readFile} = require('fs');
+const {readFile, writeFile} = require('fs');
 const { resolve } = require('path');
+const documents = {};
+function initializeConnectionToRoom(client, documentName, userName) {
+    client.join(documentName);
+    client.emit('connected');
+    client.emit('connected to room');
+    client.emit('document updated', documents[documentName]);
 
+    client.broadcast
+        .to(documentName)
+        .emit('new user connected to room', `User: ${userName} connected to Room: ${documentName}`);
 
+    client.on('document changed', newDocument => {
+        documents[documentName] = newDocument;
+        client.broadcast.to(documentName).emit('document updated', newDocument);
+    });
+
+    client.on('save document', (document, next) => {
+
+        writeFile(resolve(__dirname, `../data/${documentName}.html`), document, function (error) {
+           if(error) {
+               client.emit('save document error', `can not save file ${documentName}`);
+           } else {
+               client.emit('save document success');
+           }
+        });
+    })
+
+}
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
-io.on('connection', socket => {
-    // let {handshake: {query: userName} } = socket;
-    const userName = socket.handshake.query.userName;
-    const documentName = socket.handshake.query.documentName;
-    let document;
+io.on('connection', client => {
 
-    function initializeConnectionToRoom() {
-        socket.join(documentName);
-        socket.emit('connected');
-        socket.emit('connected to room');
-        socket.emit('document updated', document);
-        socket.broadcast.to(documentName).emit('new user connected to room', `User: ${userName} connected to Room: ${documentName}`);
-        socket.on('document changed', newDocument => {
-            document = newDocument;
-            socket.broadcast.to(documentName).emit('document updated', newDocument);
-        });
-    }
+    const userName = client.handshake.query.userName;
+    const documentName = client.handshake.query.documentName;
 
-    if(!document) {
+    if(!documents[documentName]) {
         readFile(resolve(__dirname, `../data/${documentName}.html`), (error, file) => {
             if (error) {
-                socket.emit('not found', `file not found ${documentName}`);
-                socket.disconnect();
+                client.emit('open document error', `requested file ${documentName} not found `);
+                client.disconnect();
             } else {
-                document = file.toString();
-                initializeConnectionToRoom();
+                documents[documentName]= file.toString();
+                initializeConnectionToRoom(client,documentName, userName);
             }
-
         });
     } else {
-        initializeConnectionToRoom();
+        initializeConnectionToRoom(client, documentName, userName);
     }
 
 
