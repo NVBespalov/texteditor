@@ -1,0 +1,14 @@
+.thumbnail {
+    border: solid gray 3px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.thumbnail .text-content {
+    padding: 12px;
+}
+.thumbnail .image {
+}

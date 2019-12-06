@@ -1,20 +1,2 @@
-.list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    grid-gap: 38px;
-    margin: 15px;
-}
-.thumbnail {
-    border: solid gray 3px;
-    height: 220px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-.thumbnail .text-content {
-    padding: 12px;
-}
-.thumbnail .image {
-    width: 100%;
-}
+

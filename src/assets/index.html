@@ -6,20 +6,60 @@
     <link href="index.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/documents-list.js"></script>
     <script>
         const socket = io({userName: 'Vasya'});
-        socket.on('connected', function () {
-            socket.emit('get documents list');
-        });
-        socket.on('documents list', function (result) {
-        })
+
+        function onAddOne() {
+            let newVar = prompt('Название документа') || 'Новый документ';
+            debugger
+            socket.emit('document:new', newVar);
+        }
+
+        fromEvent(socket, 'connected')
+            .then(socket.emit.bind(socket, 'documents'))
+            .then(fromEventChaining(socket, 'documents'))
+            .then(combinePromiseResultArgsWith(queryDocumentElementAsync(document, '#thumbnail')))
+            .then(function ([documents, $template]) {
+                documents.forEach(({filename, blksize, ctime, size}) => {
+                    const clone = $template.content.cloneNode(true);
+                    const $image = clone.querySelector('.image');
+                    const $name = clone.querySelector('.name');
+                    const $likeCount = clone.querySelector('.like-count');
+                    const $description = clone.querySelector('.description');
+                    // $image.setAttribute('src', img);
+                    $name.innerHTML = `<b>Имя:</b> ${filename}`;
+                    $likeCount.innerHTML = `<b>blksize:</b> ${blksize}`;
+                    $description.innerHTML = `<b>ctime:</b> ${ctime}`;
+                    $template.parentNode.appendChild(clone);
+                });
+            });
+
+     queryDocumentElementAsync(document, '.add')
+         .then(flip2(fromEvent).bind(null, 'click'))
+        .then(onAddOne);
+
     </script>
 </head>
 <body>
-<div class="list">
-    <div class="thumbnail">
+<div class="thumbnails-list">
+    <div class="thumbnail add">
         <i class="fa fa-5x fa-plus"></i>
     </div>
+    <template id="thumbnail">
+        <link rel="stylesheet" href="css/thumbnails/thumbnails.css">
+        <link rel="stylesheet" href="css/thumbnails/thumbnails-list.css">
+        <div class="thumbnail">
+            <div class="image fa fa-5x fa-file"></div>
+            <div class="text-content">
+                <div class="name"></div>
+                <div class="like-count"></div>
+                <div class="description"></div>
+            </div>
+        </div>
+    </template>
 </div>
+
 </body>
 </html>
