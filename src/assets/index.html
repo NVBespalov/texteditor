@@ -12,9 +12,11 @@
         const socket = io({userName: 'Vasya'});
 
         function onAddOne() {
-            let newVar = prompt('Название документа') || 'Новый документ';
-            debugger
+            const newVar = prompt('Название документа') || 'Новый документ';
             socket.emit('document:new', newVar);
+            socket.on('document:new', (docName) => {
+                window.location.href = '/editor'
+            })
         }
 
         fromEvent(socket, 'connected')
@@ -24,13 +26,7 @@
             .then(combinePromiseResultArgsWith(queryDocumentElementAsync(document, '.thumbnails-list')))
             .then(function ([[documents, $template], $thumbnailsList]) {
 
-                const $clone = $template.content.cloneNode(true);
-                $clone.querySelector('.thumbnail').classList.add('add');
-                const $image = $clone.querySelector('.image');
-                $image.classList.remove('fa-file');
-                $image.classList.add('fa-plus');
-                $clone.querySelector('.text-content').remove();
-                $thumbnailsList.appendChild($clone);
+                $thumbnailsList.appendChild(document.querySelector('#thumbnail-add').content.cloneNode(true));
 
                 documents.forEach(({filename, blksize, ctime, size}) => {
                     const $clone = $template.content.cloneNode(true);
@@ -44,11 +40,6 @@
                     $description.innerHTML = `<b>ctime:</b> ${ctime}`;
                     $thumbnailsList.appendChild($clone);
                 });
-            })
-            .then(function () {
-                queryDocumentElementAsync(document, '.add')
-                    .then(flip2(fromEvent).bind(null, 'click'))
-                    .then(onAddOne);
             });
 
 
@@ -56,19 +47,24 @@
 </head>
 <body>
 <div class="thumbnails-list">
-
+    <link rel="stylesheet" href="css/thumbnails/thumbnails.css">
+    <link rel="stylesheet" href="css/thumbnails/thumbnails-list.css">
 
 </div>
 <template id="thumbnail">
-    <link rel="stylesheet" href="css/thumbnails/thumbnails.css">
-    <link rel="stylesheet" href="css/thumbnails/thumbnails-list.css">
-    <div class="thumbnail">
+    <div class="thumbnail" onclick="window.location.href = '/editor/'">
         <div class="image fa fa-5x fa-file"></div>
         <div class="text-content">
             <div class="name"></div>
             <div class="like-count"></div>
             <div class="description"></div>
         </div>
+    </div>
+</template>
+<template id="thumbnail-add">
+
+    <div class="thumbnail" onclick="onAddOne()">
+        <div class="image fa fa-5x fa-plus"></div>
     </div>
 </template>
 </body>

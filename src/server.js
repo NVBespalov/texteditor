@@ -53,8 +53,7 @@ io.on('connection', client => {
                 .catch(error => client.emit('documents:error', error));
     });
     client.on('document:new', function (docName) {
-        debugger
-        writeFilePromise(resolve(dataDir, `${docName}.html`)).then(a => {debugger})
+        writeFilePromise(resolve(dataDir, `${docName}.html`), '').then(() => client.emit('document:new'))
     });
     // const documentName = client.handshake.query.documentName;
     // if(!documents[documentName]) {
