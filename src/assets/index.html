@@ -12,11 +12,33 @@
         const socket = io({userName: 'Vasya'});
 
         function onAddOne() {
-            const newVar = prompt('Название документа') || 'Новый документ';
-            socket.emit('document:new', newVar);
-            socket.on('document:new', (docName) => {
-                window.location.href = '/editor'
-            })
+            const documentName = prompt('Название документа', 'Новый документ') || 'Новый документ';
+            socket.emit('document:new', documentName);
+            socket.on('document:new', goToDoc);
+        }
+
+        function drawDocumentsWithTemplateIn([[documents, $template], $thumbnailsList]) {
+            documents.forEach(drawThumbnail.bind(null, $template, $thumbnailsList));
+        }
+
+        function drawThumbnail($template, $thumbnailsList, {filename, blksize, ctime, size}) {
+            const $clone = $template.content.cloneNode(true);
+            $clone.querySelector('.thumbnail').setAttribute('data', filename);
+            // const $image = $clone.querySelector('.image');
+            const $name = $clone.querySelector('.name');
+            const $likeCount = $clone.querySelector('.like-count');
+            const $description = $clone.querySelector('.description');
+            const $size = $clone.querySelector('.size');
+            // $image.setAttribute('src', img);
+            $name.innerHTML = `<b>Имя:</b> ${filename}`;
+            $likeCount.innerHTML = `<b>blksize:</b> ${blksize}`;
+            $description.innerHTML = `<b>ctime:</b> ${ctime}`;
+            $size.innerHTML = `<b>size:</b> ${size}`;
+            $thumbnailsList.appendChild($clone);
+        }
+
+        function goToDoc(name) {
+            window.location.href = `/editor/index.html?documentName=${name}`;
         }
 
         fromEvent(socket, 'connected')
@@ -24,48 +46,31 @@
             .then(fromEventChaining(socket, 'documents'))
             .then(combinePromiseResultArgsWith(queryDocumentElementAsync(document, '#thumbnail')))
             .then(combinePromiseResultArgsWith(queryDocumentElementAsync(document, '.thumbnails-list')))
-            .then(function ([[documents, $template], $thumbnailsList]) {
-
-                $thumbnailsList.appendChild(document.querySelector('#thumbnail-add').content.cloneNode(true));
-
-                documents.forEach(({filename, blksize, ctime, size}) => {
-                    const $clone = $template.content.cloneNode(true);
-                    const $image = $clone.querySelector('.image');
-                    const $name = $clone.querySelector('.name');
-                    const $likeCount = $clone.querySelector('.like-count');
-                    const $description = $clone.querySelector('.description');
-                    // $image.setAttribute('src', img);
-                    $name.innerHTML = `<b>Имя:</b> ${filename}`;
-                    $likeCount.innerHTML = `<b>blksize:</b> ${blksize}`;
-                    $description.innerHTML = `<b>ctime:</b> ${ctime}`;
-                    $thumbnailsList.appendChild($clone);
-                });
-            });
-
+            .then(drawDocumentsWithTemplateIn);
 
     </script>
 </head>
 <body>
-<div class="thumbnails-list">
-    <link rel="stylesheet" href="css/thumbnails/thumbnails.css">
-    <link rel="stylesheet" href="css/thumbnails/thumbnails-list.css">
 
+<div class="thumbnails-list">
+    <link href="css/thumbnails/thumbnails.css" rel="stylesheet">
+    <link href="css/thumbnails/thumbnails-list.css" rel="stylesheet">
+    <div class="thumbnail add" onclick="onAddOne()">
+        <div class="image fa fa-5x fa-plus"></div>
+    </div>
 </div>
+
 <template id="thumbnail">
-    <div class="thumbnail" onclick="window.location.href = '/editor/'">
+    <div class="thumbnail" onclick="goToDoc(this.getAttribute('data'))">
         <div class="image fa fa-5x fa-file"></div>
         <div class="text-content">
             <div class="name"></div>
             <div class="like-count"></div>
             <div class="description"></div>
+            <div class="size"></div>
         </div>
     </div>
 </template>
-<template id="thumbnail-add">
 
-    <div class="thumbnail" onclick="onAddOne()">
-        <div class="image fa fa-5x fa-plus"></div>
-    </div>
-</template>
 </body>
 </html>
