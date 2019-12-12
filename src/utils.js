@@ -12,7 +12,7 @@ module.exports.fromNodeCallback = function (asyncFunction, context = null) {
     }
 };
 
-module.exports.fromCallback = function(fn, context = null) {
+module.exports.fromCallback = function fromCallback(fn, context = null) {
     return function (...args) {
         return new Promise(function (resolve, reject) {
             try {
@@ -20,6 +20,27 @@ module.exports.fromCallback = function(fn, context = null) {
             } catch (e) {
                 reject(e);
             }
+        });
+    }
+};
+
+module.exports.fromCallbackEventBase = function fromCallbackEventBase (fn, context = null) {
+    return function (...args) {
+        return new Promise(function (resolve, reject) {
+            try {
+                fn.apply(context, [...args, resolve]);
+            } catch (e) {
+                reject(e);
+            }
+        }).then(function (result) {
+
+            return new Promise(function (resolve, reject) {
+                try {
+                    fn.apply(context, [...args, resolve]);
+                } catch (e) {
+                    reject(e);
+                }
+            })
         });
     }
 };

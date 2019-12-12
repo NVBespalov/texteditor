@@ -6,8 +6,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="index.css" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/htmlParser.js"></script>
     <script>
         let $editor;
+
+        const docName =  getUrlSearchParams().get('documentName');
 
         const userName = prompt('Введите имя пользователя', 'Anonymous') || 'Anonymous';
 
@@ -15,24 +18,29 @@
 
         const socket = io(connectToSocketOptions);
 
+
         function onEditorChanged(doc) {
             socket.emit('document:changed', doc);
         }
 
-        function handleDocumentOpen(doc) {
+        function handleDocumentOpened(doc) {
             console.log(`Document opened`);
             initializeEditor(doc);
         }
-
+        function getUrlSearchParams () {
+            return new URLSearchParams(window.location.search);
+        }
         function handleConnectedEvent() {
-            socket.emit('document:open', (new URLSearchParams(window.location.search)).get('documentName'));
-            socket.on('document:open', handleDocumentOpen);
+            socket.emit('document:open', docName);
+
         }
 
         function save() {
-            socket.emit('save document', $editor.innerHTML);
-        }
+            socket.emit('document:save', $editor.innerHTML, docName);
 
+            const json = mapDOM($editor.innerHTML, false, treeHTML);
+            // debugger
+        }
 
         function initializeEditor(doc) {
             const $toolBarTemplate = document.querySelector('#toolbar');
@@ -41,6 +49,7 @@
             const $editorClone = $editorTemplate.content.cloneNode(true);
             $editorClone.querySelector('.editor').innerHTML = doc;
             document.body.append($toolBarClone, $editorClone);
+            $editor = document.querySelector('.editor');
         }
 
         function tableAdd() {
@@ -70,21 +79,26 @@
             }
         }
 
-        function getImage(files) {
-            debugger
-        }
+        function getImage(files) {}
+
         function changeColor(color) {
 
         }
+
         function handleDocumentUpdate() {
 
         }
+
+        function handleDocumentSaved(doc) {}
+
     </script>
 </head>
 <body>
 <script>
     socket.on('connected', handleConnectedEvent);
     socket.on('document:update', handleDocumentUpdate);
+    socket.on('document:save', handleDocumentSaved);
+    socket.on('document:open', handleDocumentOpened);
 </script>
 
 <template id="toolbar">
