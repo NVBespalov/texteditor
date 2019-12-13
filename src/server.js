@@ -2,9 +2,9 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const {readdir, stat, writeFile, readFile, promises: { access }} = require('fs');
+const {readdir, stat, writeFile, readFile, promises: {access}} = require('fs');
 const {resolve} = require('path');
-const {fromNodeCallback, fromCallback} = require('./utils');
+const {fromNodeCallback, fromEvent} = require('./utils');
 
 app.use(express.static(__dirname + '/assets/'));
 
@@ -19,10 +19,10 @@ io.on('connection', async client => {
     client.on('documents', () => {
         const toNodeCallbackStat = fileName => statsPromise(resolve(dataDir, fileName));
         readDirPromise(dataDir)
-                .then((files) => Promise.all([Promise.resolve(files), Promise.all(files.map(toNodeCallbackStat))]))
-                .then(([files, stats]) => stats.reduce((memo, it, index) => [...memo, {...it, filename: files[index]}], []))
-                .then(dirInfo => client.emit('documents', dirInfo))
-                .catch(error => client.emit('documents:error', error));
+            .then((files) => Promise.all([Promise.resolve(files), Promise.all(files.map(toNodeCallbackStat))]))
+            .then(([files, stats]) => stats.reduce((memo, it, index) => [...memo, {...it, filename: files[index]}], []))
+            .then(dirInfo => client.emit('documents', dirInfo))
+            .catch(error => client.emit('documents:error', error));
     });
     client.on('document:new', docName => {
         writeFilePromise(resolve(dataDir, `${docName}.html`), '').then(() => client.emit('document:new'));
@@ -32,7 +32,7 @@ io.on('connection', async client => {
     client.on('document:open', async (documentName) => {
         const documentPath = resolve(dataDir, documentName);
         const error = await access(documentPath);
-        if(error) {
+        if (error) {
             client.emit('document:error');
         } else {
             try {
@@ -42,9 +42,26 @@ io.on('connection', async client => {
             }
         }
     });
-    fromCallback(client.on, client)('document:save').then(function (a) {
 
-    debugger
+
+    const tap = (fn) => (observable) => {
+        debugger
+        const subscription = observable.subscribe({
+            next(...args) {
+                debugger
+                fn.apply(null, args);
+                observable.unsubscribe(subscription);
+            }
+        });
+    };
+
+    fromEvent(client, 'document:save').pipe(tap((a, b) => {
+        debugger
+    })).subscribe({
+        async next(document, docName) {
+            await writeFilePromise(resolve(dataDir, `${docName}`), document);
+            client.emit('document:save', document);
+        }
     });
     // client.on('document:save', async (doc, docName) => {
     //     try {
