@@ -1,7 +1,7 @@
 module.exports.fromNodeCallback = function (asyncFunction, context = null) {
     return function (...args) {
         return new Promise((resolve, reject) => {
-            asyncFunction.apply(context, [...args, function (err, result) {
+            asyncFunction.apply(context, [...args, (err, result) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -15,7 +15,7 @@ module.exports.fromNodeCallback = function (asyncFunction, context = null) {
 function Observable(fn) {
     const subscribers = [];
     const pipes = [];
-    this.subscribe = (subscriber) => {
+    this.subscribe = (subscriber = {}) => {
         return subscribers.push(subscriber);
     };
     this.unsubscribe = (subscriptionIndex) => subscribers.splice(subscriptionIndex, 1);
@@ -58,8 +58,8 @@ const flatMap = (fn) => (observable) => {
         const subscription = observable.subscribe({
             next(...args) {
                 fn.apply(null, args).subscribe({
-                    next() {
-                        obs.next.apply(null,);
+                    next(...args) {
+                        obs.next.apply(null,args);
                         // observable.unsubscribe(subscription);
                     }
                 });
@@ -68,6 +68,8 @@ const flatMap = (fn) => (observable) => {
         });
     });
 };
+
+module.exports.flatMap = flatMap;
 
 module.exports.fromCallback = function fromCallback(fn, context = null) {
     return function (...args) {
@@ -114,6 +116,4 @@ module.exports.tap = tap;
 
 module.exports.Observable = Observable;
 
-module.exports.fromEvent = (target, eventName) => new Observable((obs) => target.on(eventName, (...args) => {
-    obs.next.apply(null, args);
-}));
+module.exports.fromEvent = (target, eventName) => new Observable((obs) => target.on(eventName, (...args) => obs.next.apply(null, args)));

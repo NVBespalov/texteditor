@@ -4,7 +4,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const {readdir, stat, writeFile, readFile, promises: {access}} = require('fs');
 const {resolve} = require('path');
-const {fromNodeCallback, fromEvent, tap} = require('./utils');
+const {fromNodeCallback, fromEvent, flatMap, Observable, tap} = require('./utils');
 
 app.use(express.static(__dirname + '/assets/'));
 
@@ -44,16 +44,10 @@ io.on('connection', async client => {
     });
 
 
-
-
-    fromEvent(client, 'document:save').pipe(tap((a, b) => {
-        // side effect
-    })).subscribe({
-        async next(document, docName) {
-            await writeFilePromise(resolve(dataDir, `${docName}`), document);
-            client.emit('document:save', document);
-        }
-    });
+    fromEvent(client, 'document:save').pipe(flatMap((document, docName) => {
+        return new Observable(({next}) => writeFilePromise(resolve(dataDir, `${docName}`), document).then(next));
+    })).pipe(tap(() => client.emit('document:save')))
+        .subscribe();
     // client.on('document:save', async (doc, docName) => {
     //     try {
     //         await writeFilePromise(resolve(dataDir, `${docName}`), doc);
